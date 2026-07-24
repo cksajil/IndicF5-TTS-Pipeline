@@ -80,10 +80,12 @@ paths = synthesize(
 - Output audio is written at 24kHz mono WAV.
 - Runs on CPU; expect noticeably slower generation than GPU. IndicF5's DiT
   model is a real ~22-layer transformer, so on a weak CPU (e.g. a dual-core
-  ultra-low-power laptop chip) a real-time factor over 100x (minutes of
-  compute per second of audio) is expected even after the optimizations
-  below - there's a hard floor set by the hardware, not just software
-  overhead.
+  ultra-low-power laptop chip) a high real-time factor is expected even
+  after the optimizations below - there's a hard floor set by the hardware,
+  not just software overhead. Measured on a MacBook Air (dual-core, CPU-only)
+  at the default `--nfe-steps 16`: model load ~4.5s, then ~537s of inference
+  for 6.44s of output audio (RTF ~83x, i.e. roughly 83 seconds of compute per
+  second of generated speech).
 - On CPU this pipeline: runs the diffusion sampler at 16 steps instead of
   IndicF5's default 32 (see `--nfe-steps`), caches the reference-audio
   preprocessing across all texts in a batch instead of redoing it per text,
