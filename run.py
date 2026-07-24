@@ -8,7 +8,7 @@ Examples:
 import argparse
 from pathlib import Path
 
-from indicf5_pipeline import synthesize
+from indicf5_pipeline import DEFAULT_NFE_STEP, synthesize
 
 
 def read_texts(path: Path) -> list[str]:
@@ -23,6 +23,7 @@ def main():
     parser.add_argument("--outdir", type=Path, default=Path("output"), help="Directory to write generated WAV files")
     parser.add_argument("--ref-audio", type=Path, default=Path("reference/sajil_ref_audio_1.wav"), help="Path to your reference voice recording")
     parser.add_argument("--ref-text", type=Path, default=Path("reference/transcript.txt"), help="Path to a file containing the exact transcript of the reference audio")
+    parser.add_argument("--nfe-steps", type=int, default=DEFAULT_NFE_STEP, help=f"Diffusion steps per chunk on CPU; lower is faster, higher is higher quality (default {DEFAULT_NFE_STEP}, upstream default 32)")
     args = parser.parse_args()
 
     texts = list(args.text)
@@ -38,7 +39,7 @@ def main():
 
     ref_text = args.ref_text.read_text(encoding="utf-8").strip()
 
-    paths = synthesize(texts, args.outdir, args.ref_audio, ref_text)
+    paths = synthesize(texts, args.outdir, args.ref_audio, ref_text, nfe_step=args.nfe_steps)
     for p in paths:
         print(p)
 

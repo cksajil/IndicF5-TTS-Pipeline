@@ -53,6 +53,13 @@ Flags:
   `reference/sajil_ref_audio_1.wav`)
 - `--ref-text` — path to a file with the reference clip's transcript (default
   `reference/transcript.txt`)
+- `--nfe-steps` — diffusion steps per chunk on CPU (default `16`). Lower is
+  faster with a small quality cost; raise to `32` (the upstream default) for
+  higher quality at roughly double the time.
+
+Each text prints its inference time, generated audio duration, and real-time
+factor (RTF = inference time / audio duration) as it's synthesized, plus a
+totals line at the end of a batch.
 
 ### Python
 
@@ -71,4 +78,14 @@ paths = synthesize(
 
 - First run downloads the IndicF5 model weights from Hugging Face.
 - Output audio is written at 24kHz mono WAV.
-- Runs on CPU; expect noticeably slower generation than GPU.
+- Runs on CPU; expect noticeably slower generation than GPU. IndicF5's DiT
+  model is a real ~22-layer transformer, so on a weak CPU (e.g. a dual-core
+  ultra-low-power laptop chip) a real-time factor over 100x (minutes of
+  compute per second of audio) is expected even after the optimizations
+  below - there's a hard floor set by the hardware, not just software
+  overhead.
+- On CPU this pipeline: runs the diffusion sampler at 16 steps instead of
+  IndicF5's default 32 (see `--nfe-steps`), caches the reference-audio
+  preprocessing across all texts in a batch instead of redoing it per text,
+  and keeps all CPU threads on matmul work instead of the unused inter-op
+  thread pool.
