@@ -55,7 +55,19 @@ Flags:
   `reference/transcript.txt`)
 - `--nfe-steps` — diffusion steps per chunk on CPU (default `16`). Lower is
   faster with a small quality cost; raise to `32` (the upstream default) for
-  higher quality at roughly double the time.
+  higher quality at roughly double the time. Prefer F5-TTS's tuned EPSS step
+  counts (`5, 6, 7, 10, 12, 16, 32`) over arbitrary values — those get a
+  non-uniform, quality-tuned timestep schedule instead of naive linear steps.
+- `--fast` — shortcut for `--nfe-steps 7`, roughly another ~2x faster than the
+  default 16 steps, with a larger (but often still usable) quality trade-off.
+  Benchmark on your own voice/text before relying on it.
+- `--bf16` — run the diffusion transformer under CPU bf16 autocast. Gives a
+  real extra speedup (roughly 1.3–1.8x) on CPUs with native bf16 support
+  (recent Intel/AMD desktop and server chips); little to no effect on
+  older/mobile CPUs, and hasn't been broadly quality-validated for this
+  model — benchmark before relying on it.
+- `--threads N` — override the number of CPU threads used for matmul
+  (default: auto-detected physical core count).
 
 Each text prints its inference time, generated audio duration, and real-time
 factor (RTF = inference time / audio duration) as it's synthesized, plus a
@@ -89,5 +101,16 @@ paths = synthesize(
 - On CPU this pipeline: runs the diffusion sampler at 16 steps instead of
   IndicF5's default 32 (see `--nfe-steps`), caches the reference-audio
   preprocessing across all texts in a batch instead of redoing it per text,
-  and keeps all CPU threads on matmul work instead of the unused inter-op
-  thread pool.
+  pins the matmul thread pool to the machine's physical core count instead
+  of leaving it at PyTorch's default (which is frequently wrong on VMs/
+  containers and can cause hyperthread contention), and keeps all CPU
+  threads on matmul work instead of the unused inter-op thread pool.
+- For a further speedup beyond the default, try `--fast` (7-step EPSS
+  schedule, ~2x fewer transformer passes than the default 16) and/or
+  `--bf16` (CPU bf16 autocast, helps most on newer Intel/AMD chips).
+  Together these have taken RTF from ~83x down into single digits on
+  modern multi-core desktop CPUs in early testing — but the exact number
+  is very hardware-dependent, so benchmark on your own machine with
+  `--fast --bf16` and compare audio quality before committing to it for
+  production use. Installing `psutil` (`pip install psutil`) improves the
+  automatic physical-core detection used for `--threads`.
