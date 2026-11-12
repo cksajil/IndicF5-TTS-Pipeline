@@ -8,6 +8,15 @@ Telugu.
 Voice cloning here is zero-shot: every run needs a short reference audio clip of
 the target voice plus its exact transcript. There's no separate training step.
 
+**Highlights**
+- Batch synthesis from the command line or Python, one WAV per input text
+- Built for CPU-only machines: tuned EPSS diffusion-step schedules (`--nfe-steps`, `--fast`),
+  reference-audio preprocessing cached across a batch, matmul threads pinned to physical cores,
+  and optional bf16 autocast (`--bf16`)
+- Reports inference time and real-time factor for every text, so speed-ups can be measured;
+  in early tests these options took the real-time factor from ~83× to single digits on modern
+  multi-core desktop CPUs (details in [Notes](#notes))
+
 ## Setup
 
 ```bash
